@@ -1,0 +1,248 @@
+/*============== variables globales ======================================= */
+// Begin variables globales -----------------------------------------------
+UpperCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" ; 
+LowerCaseLetters = "abcdefghijklmnopqrstuvwxyz" ;
+
+AAA_A = ['CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
+'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
+'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'] ;
+// End variables globales --------------------------------------------------
+
+/* ======= Elementary functions =========================================== */
+/* ------- To Upper Case -------------------------------------------------- */
+// Begin toUpperCase
+function toUpperCase(string){
+    if (string.type != "string"){
+    	print (" Error! " + string+ " is not a string ");
+    	return string;
+    }
+	else {
+    	var n = UpperCaseLettres.size;
+    	var out = string;
+    	for (var i=0; i<n ;i++ ) {
+    	out = out.replace(LowerCaseLettres[i], UpperCaseLettres[i]);
+    	}
+    return out;
+	}
+}
+// End toUpperCase
+
+/* ------- To Lower Case -------------------------------------------------- */
+// Begin toLowerCase
+function toLowerCase(string){
+	if (string.type != "string"){
+    	print (" Error! " + string+ " is not a string ");
+        print (" Please use '" + string+ "' form ");
+    	return string;
+    } else {
+	var n = LowerCaseLettres.size;
+	var out = string;
+	for (var i=0; i<n; i++) {
+		out = out.replace(UpperCaseLettres[i],LowerCaseLettres[i]);
+		}
+	return out;
+	}
+}
+// End toLowerCase
+
+/* ------- To translate the 'AAA'  in 'A' --------------------------------- */
+// Begin tr3to1
+function tr3to1(string){
+	if (string.size != 3){
+		print (" Error! " + string+ " does not contain 3 char ");
+        print (" Please enter 3 char ");
+	} else{
+		res="";
+		res= AAA_A[string];
+		return res;
+	};
+return res;
+}
+// End tr3to1
+
+
+/* ------- To check the model ID  'modID' ----------------------------------*/
+// Begin checkModID
+function checkModID(modID){
+	// Check if it is a string  
+	if(modID.type != "string"){
+		print (" The Model entered is not a string");
+        print (" please use the following form 'n.m' ");
+		return false;
+	}
+
+	// Check if it respects the form n.m 
+	if (modID.split('.').length!=2
+        OR modID.split('.')[1].length<1
+        OR modID.split('.')[2].length<1){
+		print(" The Model entered do not respect the form n.m ");
+			return false;
+	}
+
+	// Check if it exists in loaded files 	
+	list_models = getAllModel();	// 'getAllModel' is explained later	
+	for (var i=1; i<=list_models.length; i++){
+		if (modID==list_models[i]){
+            return true
+            };					
+	}
+	print(" The model: " + modID+ " does not exist in file ");
+    return false;
+}
+// End checkModID
+
+/* ------- To get the file header 'fileHeader' for a model 'modID' ---------*/
+// Begin getFileHeader
+function getFileHeader (modID){
+    if (checkModID(modID) = true){
+        currentModel= _modelNumber;
+        /* parse the content of currentModel, then
+        Get what there are before the ' - '   */
+        currentmodel_1=(currentModel.split("-")[1]);
+        print currentmodel_1;
+        // Get what there are after the '-'
+        currentmodel_2=((currentModel.split("-")[2])[2][5]);
+        print currentmodel_2;
+        
+        // Activate the model 'modID'
+        model @modID;
+        // Control if it works
+        print _modelNumber;
+        // get Fileheader
+        getProperty fileHeader;
+        
+        // Reactivate the previous model (before execute: model modID )
+        model @currentmodel_1 - @currentmodel_2;
+        print " Reactivate the previous model: "+ currentModel;
+    }
+}
+// End getFileHeader
+
+/* ----- To get All the SEQRES  -----------------------------------------------------*/
+function getAllSEQRES(modID){
+	if (checkModID(modID) = true){
+		set pdbGetHeader ON ;
+		// Activate the model 'modID'
+        model @modID;
+		header = getFileHeader(modID);
+		if (header!=""){
+			line ="";
+			all_seqres = array();
+			
+			seq_Res = header.split().find("SEQRES");
+			#print ((seq_Res[3])[20][70]);			# To test
+			for (var i=1; i<=seq_Res.length; i++){
+				line = (seq_Res[i])[20][70];
+				#print (line);
+			#print (line);
+			all_lines = line.split(" ");
+				for (var j =1; j<= all_lines.length; j++){
+					if (all_lines[j]!=""){
+						all_seqres.push(all_lines[j]);
+					} 
+				}
+			}
+
+			print (all_seqres.length);
+			return all_seqres;
+		}
+		
+	}
+	
+}
+
+/* ------ To set property -----------------------------------------------------------*/
+function set_property_seqresno(modID){	
+	if (checkModID(modID) = true){
+		list_SEQRES = getAllSEQRES(modID);									// get all residues 
+		list_protienATOMS = {model=@modID and !solvent and !ligand};		// get all atoms that respect the condition
+		position_inSEQRES= 0;												// the position in the list of 'SEQRES'
+		inSeqcod = "";														// the current 'seqcode' 
+		outRES = "";														// the current 'residue' 
+		for (var i=1; i<=list_protienATOMS.length; i++){
+			if (list_protienATOMS[i].seqcode != inSeqcod){
+				position_inSEQRES ++;
+				inSeqcod = list_protienATOMS[i].seqcode;
+			}
+			outRES = list_SEQRES[position_inSEQRES];
+			while (list_protienATOMS[i].group != outRES){
+				position_inSEQRES ++;
+				outRES = list_SEQRES[position_inSEQRES];
+				list_protienATOMS[i].property_seqresno = position_inSEQRES;
+			}
+		}
+	}
+	print (" property have been set for the model : " + modID );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/****************************/
+/*	    Plus plus plus      */
+/****************************/
+
+
+function getLastFileNumber()
+/*Fonction qui retourne le numéro du dernier fichier pdb chargé  */
+	{		
+		tabStartEndModel = array(); 
+		model all;
+		allModel = _modelNumber;
+		tabStartEndModel=allModel.split(' - ');
+		lastFileNumber = tabStartEndModel[tabStartEndModel.length].split('.');
+		return lastFileNumber[1]; 		
+	}
+	
+
+function getAllModel(){
+/*Fonction qui renvoie tout les modèles chargés dans un tableau*/	
+	lastmodelNumber = 0;
+	lastFileNumber = getLastFileNumber();
+	list_models=array();
+	for(var i = 1; i<=lastFileNumber; i++){
+		modID = 0+(i+'.0'); /* pour le transformer en intier */
+		model @modID;
+		if (_modelNumber.split(' - ')[2]==""){
+			lastmodelNumber = 1;
+		}
+		else{
+			lastmodelNumber = _modelNumber.split(' - ')[2].split('.')[2];
+		}
+		for (var j = 1; j<=lastmodelNumber;j++){
+			mod = ""+i+'.'+j; /* transformer en string*/
+			list_models.push(mod);
+		}		
+	}		
+	return list_models;
+}	
