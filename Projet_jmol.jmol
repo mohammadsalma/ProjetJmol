@@ -212,6 +212,7 @@ function set_property_seqresno(modID){
 			if (list_protienATOMS[i].seqcode != inSeqcod){
 				position_inSEQRES ++;
 				inSeqcod = list_protienATOMS[i].seqcode;
+                //print(position_inSEQRES);
 			}
 			
             outRES = list_SEQRES[position_inSEQRES];
@@ -219,6 +220,7 @@ function set_property_seqresno(modID){
 			while (list_protienATOMS[i].group != outRES){
 				position_inSEQRES ++;
 				outRES = list_SEQRES[position_inSEQRES];
+                //print(position_inSEQRES);
             }
 			list_protienATOMS[i].property_seqresno = position_inSEQRES;
 		}
@@ -229,4 +231,8 @@ function set_property_seqresno(modID){
 
 
 
-
+print(" The script is loaded correctly. Here you can find the following functions:");
+print(" getAllModel()                           which return the models in loaded pdb file(s)");
+print(" getFileHeader(modID)                which return the header of a selected model (modID)");
+print(" getAllSEQRES(modID)                 which return the SEQRES's residues of a selected model (modID)");
+print(" set_property_seqresno(modID)    which assign the new property ");
