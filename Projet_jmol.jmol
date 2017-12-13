@@ -9,6 +9,8 @@ AAA_A = ['CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
 'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'] ;
 // End variables globales --------------------------------------------------
 
+
+
 /* ======= Elementary functions =========================================== */
 /* ------- To Upper Case -------------------------------------------------- */
 // Begin toUpperCase
@@ -61,6 +63,50 @@ return res;
 }
 // End tr3to1
 
+/* ------- To get the number of the last loaded pdb file -------------------*/
+//// Begin getLastFileNumber
+function getLastFileNumber(){		
+    tabStartEndModel = array(); 
+    model all;
+    allModel = _modelNumber;
+    tabStartEndModel=allModel.split(' - ');
+    lastFileNumber = tabStartEndModel[tabStartEndModel.length].split('.');
+    return lastFileNumber[1]; 		
+}
+//// End getLastFileNumber	
+
+
+/* ------- To get all models in loaded pdb files ---------------------------*/
+// Begin getAllModel
+function getAllModel(){	
+	first_LastModel = array();
+    model all;
+    models_rang = _modelNumber;
+    first_LastModel = models_rang.split(' - ');
+    last_fileNumber = ([first_LastModel.length].split('.'))[1];
+    //print (last_fileNumber);
+    //last_modelNumber = 0;
+	
+	list_models=array();
+	for(var i = 1; i<=last_fileNumber; i++){
+		// To transfer to integer
+        modID = 0+(i+'.0'); 
+		model @modID;
+		if (_modelNumber.split(' - ')[2]==""){
+			last_modelNumber = 1;
+		}
+		else{
+			last_modelNumber = _modelNumber.split(' - ')[2].split('.')[2];
+		}
+		for (var j = 1; j<=last_modelNumber;j++){
+			mod = ""+i+'.'+j; /* transformer en string*/
+			list_models.push(mod);
+		}		
+	}		
+	return list_models;
+}	
+// End getAllModel
+
 
 /* ------- To check the model ID  'modID' ----------------------------------*/
 // Begin checkModID
@@ -81,16 +127,18 @@ function checkModID(modID){
 	}
 
 	// Check if it exists in loaded files 	
-	list_models = getAllModel();	// 'getAllModel' is explained later	
+	list_models = getAllModel();
+    
 	for (var i=1; i<=list_models.length; i++){
 		if (modID==list_models[i]){
             return true
-            };					
+            }					
 	}
 	print(" The model: " + modID+ " does not exist in file ");
     return false;
 }
 // End checkModID
+
 
 /* ------- To get the file header 'fileHeader' for a model 'modID' ---------*/
 // Begin getFileHeader
@@ -119,130 +167,79 @@ function getFileHeader (modID){
 }
 // End getFileHeader
 
-/* ----- To get All the SEQRES  -----------------------------------------------------*/
+
+
+
+/* ===== Project ===========================================================*/
+/* ===== First part ========================================================*/
+
+/* ----- To get All the SEQRES  --------------------------------------------*/
+// Begin getAllSEQRES
 function getAllSEQRES(modID){
 	if (checkModID(modID) = true){
 		set pdbGetHeader ON ;
 		// Activate the model 'modID'
         model @modID;
 		header = getFileHeader(modID);
-		if (header!=""){
+		if (header != ""){
 			line ="";
 			all_seqres = array();
 			
 			seq_Res = header.split().find("SEQRES");
-			#print ((seq_Res[3])[20][70]);			# To test
+			//print ((seq_Res[3])[20][70]);			// To test
 			for (var i=1; i<=seq_Res.length; i++){
 				line = (seq_Res[i])[20][70];
-				#print (line);
-			#print (line);
-			all_lines = line.split(" ");
+                all_lines = line.split(" ");
 				for (var j =1; j<= all_lines.length; j++){
 					if (all_lines[j]!=""){
 						all_seqres.push(all_lines[j]);
 					} 
 				}
 			}
-
-			print (all_seqres.length);
+            
+            // To control the result
+			print (" There are : "+all_seqres.length+ " residues ");
 			return all_seqres;
 		}
 		
 	}
 	
 }
+// End getAllSEQRES
 
-/* ------ To set property -----------------------------------------------------------*/
+
+/* ------ To set property --------------------------------------------------*/
+// Begin set_property_seqresno
 function set_property_seqresno(modID){	
 	if (checkModID(modID) = true){
-		list_SEQRES = getAllSEQRES(modID);									// get all residues 
-		list_protienATOMS = {model=@modID and !solvent and !ligand};		// get all atoms that respect the condition
-		position_inSEQRES= 0;												// the position in the list of 'SEQRES'
-		inSeqcod = "";														// the current 'seqcode' 
-		outRES = "";														// the current 'residue' 
-		for (var i=1; i<=list_protienATOMS.length; i++){
+		// To get all residues
+        list_SEQRES = getAllSEQRES(modID);									 
+		// To get all atoms that respect the condition
+        list_protienATOMS = {model=@modID and !solvent and !ligand};		
+		
+        position_inSEQRES= 0;				// the position in the list of 'SEQRES'
+		inSeqcod = "";						// the current 'seqcode' 
+		outRES = "";						// the current 'residue' 
+		
+        for (var i=1; i<=list_protienATOMS.length; i++){
 			if (list_protienATOMS[i].seqcode != inSeqcod){
 				position_inSEQRES ++;
 				inSeqcod = list_protienATOMS[i].seqcode;
 			}
-			outRES = list_SEQRES[position_inSEQRES];
+			
+            outRES = list_SEQRES[position_inSEQRES];
+            
 			while (list_protienATOMS[i].group != outRES){
 				position_inSEQRES ++;
 				outRES = list_SEQRES[position_inSEQRES];
-				list_protienATOMS[i].property_seqresno = position_inSEQRES;
-			}
+            }
+			list_protienATOMS[i].property_seqresno = position_inSEQRES;
 		}
 	}
-	print (" property have been set for the model : " + modID );
+	print (" The property have been set for the model : " + modID );
 }
+// End set_property_seqresno
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/****************************/
-/*	    Plus plus plus      */
-/****************************/
-
-
-function getLastFileNumber()
-/*Fonction qui retourne le numéro du dernier fichier pdb chargé  */
-	{		
-		tabStartEndModel = array(); 
-		model all;
-		allModel = _modelNumber;
-		tabStartEndModel=allModel.split(' - ');
-		lastFileNumber = tabStartEndModel[tabStartEndModel.length].split('.');
-		return lastFileNumber[1]; 		
-	}
-	
-
-function getAllModel(){
-/*Fonction qui renvoie tout les modèles chargés dans un tableau*/	
-	lastmodelNumber = 0;
-	lastFileNumber = getLastFileNumber();
-	list_models=array();
-	for(var i = 1; i<=lastFileNumber; i++){
-		modID = 0+(i+'.0'); /* pour le transformer en intier */
-		model @modID;
-		if (_modelNumber.split(' - ')[2]==""){
-			lastmodelNumber = 1;
-		}
-		else{
-			lastmodelNumber = _modelNumber.split(' - ')[2].split('.')[2];
-		}
-		for (var j = 1; j<=lastmodelNumber;j++){
-			mod = ""+i+'.'+j; /* transformer en string*/
-			list_models.push(mod);
-		}		
-	}		
-	return list_models;
-}	
