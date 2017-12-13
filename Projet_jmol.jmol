@@ -63,19 +63,6 @@ return res;
 }
 // End tr3to1
 
-/* ------- To get the number of the last loaded pdb file -------------------*/
-//// Begin getLastFileNumber
-function getLastFileNumber(){		
-    tabStartEndModel = array(); 
-    model all;
-    allModel = _modelNumber;
-    tabStartEndModel=allModel.split(' - ');
-    lastFileNumber = tabStartEndModel[tabStartEndModel.length].split('.');
-    return lastFileNumber[1]; 		
-}
-//// End getLastFileNumber	
-
-
 /* ------- To get all models in loaded pdb files ---------------------------*/
 // Begin getAllModel
 function getAllModel(){	
@@ -180,7 +167,7 @@ function getAllSEQRES(modID){
 		set pdbGetHeader ON ;
 		// Activate the model 'modID'
         model @modID;
-		header = getFileHeader(modID);
+		header = getProperty('fileHeader');
 		if (header != ""){
 			line ="";
 			all_seqres = array();
